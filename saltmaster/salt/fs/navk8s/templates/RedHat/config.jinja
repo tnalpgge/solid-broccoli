@@ -1,0 +1,34 @@
+###
+# kubernetes system config
+#
+# The following values are used to configure various aspects of all
+# kubernetes services, including
+#
+#   kube-apiserver.service
+#   kube-controller-manager.service
+#   kube-scheduler.service
+#   kubelet.service
+#   kube-proxy.service
+# logging to stderr means we get it in the systemd journal
+#
+# This template is managed by Salt
+
+KUBE_LOGTOSTDERR="--logtostderr=true"
+
+# journal message level, 0 is debug
+KUBE_LOG_LEVEL="--v=0"
+
+# Should this cluster be allowed to run privileged docker containers
+KUBE_ALLOW_PRIV="--allow-privileged=false"
+
+# How the controller-manager, scheduler, and proxy find the apiserver
+{%- set kubemaster_ips = salt['mine.get']('roles:kubemaster', 'network.ip_addrs', 'grain') -%}
+{%- set master_ips = [] -%}
+{%- for master, ips in kubemaster_ips.iteritems() -%}
+{%-   for ip in ips -%}
+{%-     if salt['network.connect'](ip, 8080, timeout=3, family='ipv4') -%}
+{%-       do master_ips.append(ip) -%}
+{%-     endif -%}
+{%-   endfor -%}
+{%- endfor %}
+KUBE_MASTER="--master=http://{{ master_ips[0] }}:8080"

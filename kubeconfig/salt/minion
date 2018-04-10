@@ -1,0 +1,5 @@
+master: 172.28.128.254
+grains:
+  roles:
+    - kubernetes
+    - kubeconfig

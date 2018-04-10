@@ -1,0 +1,18 @@
+# -*- coding: utf-8 -*-
+# vim: ft=jinja
+{% import_yaml 'navk8s/defaults.yaml' as defaults %}
+{% import_yaml 'navk8s/osfamilymap.yaml' as osfamilymap %}
+{% import_yaml 'navk8s/osmap.yaml' as osmap %}
+{% set navk8s = salt['grains.filter_by'](
+     defaults,
+     merge=salt['grains.filter_by'](
+       osfamilymap,
+       grain='os_family',
+       merge=salt['grains.filter_by'](
+         osmap,
+         grain='os',
+         merge=salt['pillar.get']('navk8s:lookup', {}),
+       ),
+     ),
+   base='navk8s')
+%}

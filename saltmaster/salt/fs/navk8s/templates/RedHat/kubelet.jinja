@@ -1,0 +1,29 @@
+###
+# kubernetes kubelet (minion) config
+
+# The address for the info server to serve on (set to 0.0.0.0 or "" for all interfaces)
+KUBELET_ADDRESS=""
+
+# The port for the info server to serve on
+# KUBELET_PORT="--port=10250"
+
+# You may leave this blank to use the actual hostname
+KUBELET_HOSTNAME=""
+
+# location of the api-server
+{%- set kubemaster_ips = salt['mine.get']('roles:kubemaster', 'network.ip_addrs', 'grain') -%}
+{%- set master_ips = [] -%}
+{%- for master, ips in kubemaster_ips.iteritems() -%}
+{%-   for ip in ips -%}
+{%-     if salt['network.connect'](ip, 8080, timeout=3, family='ipv4') -%}
+{%-       do master_ips.append(ip) -%}
+{%-     endif -%}
+{%-   endfor -%}
+{%- endfor %}
+KUBELET_API_SERVER="--api-servers=http://{{ master_ips[0] }}:8080"
+
+# pod infrastructure container
+KUBELET_POD_INFRA_CONTAINER="--pod-infra-container-image=registry.access.redhat.com/rhel7/pod-infrastructure:latest"
+
+# Add your own!
+KUBELET_ARGS=""

@@ -1,0 +1,8 @@
+fileserver_backend:
+  - roots
+  - gitfs
+#gitfs_remotes:
+#  - file:///vagrant/salt/git/salt-formula
+#ext_pillar:
+#  - git:
+#      - file:///vagrant/salt/git/something-pillar
