@@ -1,64 +1,96 @@
 # vim: ft=yaml
 RedHat:
   packages:
-    kubemaster:
-      - kubernetes-master
-      - kubernetes-client
-      - etcd
-    kubenode:
-      - kubernetes-node
-      - kubernetes-client
+    kubernetes:
+       - kubelet
+       - kubeadm
+       - kubectl
+       - docker
+    kubemaster: []
+#      - kubernetes
+#      - kubernetes-kubeadm
+#      - kubernetes-client
+#      - kubernetes-master
+#      - etcd
+    kubenode: []
+#      - kubernetes
+#      - kubernetes-kubeadm
+#      - kubernetes-client
+#      - kubernetes-node
   services:
-    kubemaster:
-      apiserver: kube-apiserver
-      ctlrmgr: kube-controller-manager
-      scheduler: kube-scheduler
-      etcd: etcd
-    kubenode:
-      proxy: kube-proxy
+    kubernetes:
       kubelet: kubelet
+      docker: docker
+    kubemaster: {}
+#      apiserver: kube-apiserver
+#      ctlrmgr: kube-controller-manager
+#      etcd: etcd
+#      scheduler: kube-scheduler
+#    kubenode:
+#      proxy: kube-proxy
+#      kubelet: kubelet
   files:
-    kubemaster:
-      /etc/kubernetes/config:
-        template: jinja
+    kubernetes:
+      /etc/systemd/system/kubelet.service.d/10-kubeadm.conf:
         source:
-          - salt://navk8s/templates/RedHat/config.jinja
-        services:
-          - apiserver
-          - ctlrmgr
-          - scheduler
-      /etc/kubernetes/apiserver:
-        template: jinja
-        source:
-          - salt://navk8s/templates/RedHat/apiserver.jinja
-        services:
-          - apiserver
-      /etc/kubernetes/controller-manager:
-        source:
-          - salt://navk8s/files/RedHat/controller-manager
-        services:
-          - ctlrmgr
-      /etc/kubernetes/scheduler:
-        source:
-          - salt://navk8s/files/RedHat/scheduler
-        services:
-          - scheduler
-    kubenode:
-      /etc/kubernetes/config:
-        template: jinja
-        source:
-          - salt://navk8s/templates/RedHat/config.jinja
+          - salt://navk8s/files/RedHat/10-kubeadm.conf
         services:
           - kubelet
-          - proxy
-      /etc/kubernetes/kubelet:
-        template: jinja
-        source:
-          - salt://navk8s/templates/RedHat/kubelet.jinja
-        services:
-          - kubelet
-      /etc/kubernetes/proxy:
-        source:
-          - salt://navk8s/files/RedHat/proxy
-        services:
-          - proxy
+        watch_in:
+          - cmd:
+              - reload_systemd_configuration
+#    kubemaster:
+#      /etc/kubernetes/config:
+#        template: jinja
+#        source:
+#          - salt://navk8s/templates/RedHat/config.jinja
+#        services:
+#          - apiserver
+#          - ctlrmgr
+#          - scheduler
+#      /etc/kubernetes/apiserver:
+#        template: jinja
+#        source:
+#          - salt://navk8s/templates/RedHat/apiserver.jinja
+#        services:
+#          - apiserver
+#      /etc/kubernetes/controller-manager:
+#        source:
+#          - salt://navk8s/files/RedHat/controller-manager
+#        services:
+#          - ctlrmgr
+#      /etc/kubernetes/scheduler:
+#        source:
+#          - salt://navk8s/files/RedHat/scheduler
+#        services:
+#          - scheduler
+#    kubenode:
+#      /etc/kubernetes/config:
+#        template: jinja
+#        source:
+#          - salt://navk8s/templates/RedHat/config.jinja
+#        services:
+#          - kubelet
+#          - proxy
+#      /etc/kubernetes/kubelet:
+#        template: jinja
+#        source:
+#          - salt://navk8s/templates/RedHat/kubelet.jinja
+#        services:
+#          - kubelet
+#      /etc/kubernetes/proxy:
+#        source:
+#          - salt://navk8s/files/RedHat/proxy
+#        services:
+#          - proxy
+  pkgrepos:
+    google-cloud-kubernetes:
+      humanname: Google Cloud Kubernetes
+      baseurl: https://packages.cloud.google.com/yum/repos/kubernetes-el7-$basearch
+      enabled: True
+      gpgcheck: True
+      repo_gpgcheck: True
+      gpgkey: 
+        - https://packages.cloud.google.com/yum/doc/yum-key.gpg
+        - https://packages.cloud.google.com/yum/doc/rpm-package-key.gpg
+  sysctl: /etc/sysctl.d/kubernetes.conf

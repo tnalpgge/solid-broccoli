@@ -8,3 +8,4 @@ salt_formulas:
       - ntp-formula
       - resolver-formula
       - packages-formula
+      - systemd-formula

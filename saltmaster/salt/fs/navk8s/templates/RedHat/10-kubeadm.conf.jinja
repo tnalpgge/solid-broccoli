@@ -1,0 +1,1 @@
+sudo salt -G roles:kubemaster --output=txt cmd.run 'cat /etc/systemd/system/kubelet.service.d/10-kubeadm.conf | sed -e "s/.*: //"'

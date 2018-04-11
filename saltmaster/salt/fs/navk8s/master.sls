@@ -1,6 +1,10 @@
 include:
-  - navk8s
+  - navk8s.pkgrepo
+  - navk8s.pkg
+  - navk8s.sysctl
+  - navk8s.services
 
+{#
 {% from 'navk8s/map.jinja' import navk8s %}
 
 {% for destination, infos in navk8s.files.get('kubemaster', {}).iteritems() %}
@@ -19,3 +23,4 @@ include:
 {%     endfor %}
 {%   endif %}
 {% endfor %}
+#}

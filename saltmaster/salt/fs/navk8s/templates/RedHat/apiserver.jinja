@@ -6,7 +6,7 @@
 # This file is managed by Salt
 
 # The address on the local server to listen to.
-KUBE_API_ADDRESS="--bind-address=0.0.0.0"
+KUBE_API_ADDRESS="--bind-address=0.0.0.0 --insecure-bind-address=127.0.0.1"
 
 # The port on the local server to listen on.
 # KUBE_API_PORT="--port=8080"
@@ -21,7 +21,7 @@ KUBE_ETCD_SERVERS="--etcd-servers=http://127.0.0.1:2379"
 KUBE_SERVICE_ADDRESSES="--service-cluster-ip-range=10.254.0.0/16"
 
 # default admission control policies
-KUBE_ADMISSION_CONTROL="--admission-control=NamespaceLifecycle,NamespaceExists,LimitRanger,SecurityContextDeny,ServiceAccount,ResourceQuota"
+KUBE_ADMISSION_CONTROL="--admission-control=NamespaceLifecycle,LimitRanger,SecurityContextDeny,ServiceAccount,ResourceQuota"
 
 # Add your own!
 KUBE_API_ARGS="--advertise-address={{ grains.ip4_interfaces.enp0s8[0] }}"
