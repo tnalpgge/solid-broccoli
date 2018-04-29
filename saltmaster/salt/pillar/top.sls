@@ -34,3 +34,18 @@ base:
   'not G@roles:ntp':
     - match: compound
     - ntp.client
+
+  'os_family:Debian':
+    - match: grain
+    - pkg.python-apt
+    - pkg.python-pycurl
+    - pkg.python-software-properties
+
+  'G@roles:wildfly and G@os:Ubuntu':
+    - match: compound
+    - pkgrepo.ppa-ilanddev-wildfly
+    - pkg.openjdk-8
+
+  'G@roles:wildfly and G@os:SUSE':
+    - match: compound
+    - pkgrepo.home-ecsos-aggregation
