@@ -7,3 +7,4 @@
 
 .vagrant
 formulae
+saltmaster/salt/fs/wildfly
