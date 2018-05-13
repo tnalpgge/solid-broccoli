@@ -1,0 +1,13 @@
+{% set ns_ips = [] %}
+{% set nameservers = salt['mine.get']('roles:dns', 'network.ip_addrs', 'grain') %}
+{% for host, info in nameservers.iteritems() %}
+{%   do ns_ips.append(info[0]) %}
+{% endfor %}
+
+FreeBSD:
+  resolvconf:
+    search_domains:
+      - navelint.com
+    name_servers: {{ ns_ips }}
+
+default: {}

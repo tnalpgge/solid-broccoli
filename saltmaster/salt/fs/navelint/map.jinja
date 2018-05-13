@@ -1,0 +1,17 @@
+{% import_yaml 'navelint/defaults.yaml' as defaults %}
+{% import_yaml 'navelint/osfamilymap.yaml' as osfamilymap %}
+{% import_yaml 'navelint/osmap.yaml' as osmap %}
+{% set navelint = salt['grains.filter_by'](
+    defaults,
+    default='navelint',
+    merge=salt['grains.filter_by'](
+        osfamilymap,
+        grain='os_family',
+        merge=salt['grains.filter_by'](
+            osmap,
+            grain='os',
+            merge=salt['pillar.get']('navelint:lookup', {}),
+        ),
+    ),
+)
+%}

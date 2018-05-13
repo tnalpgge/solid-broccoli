@@ -9,3 +9,5 @@ salt_formulas:
       - resolver-formula
       - packages-formula
       - systemd-formula
+      - users-formula
+#      - wildfly-formula

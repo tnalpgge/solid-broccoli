@@ -1,0 +1,85 @@
+---
+# https://github.com/openshift/origin/blob/master/docs/cluster_up_down.md
+
+- name: Permit IPv4 forwarding
+  sysctl:
+    name: net.ipv4.ip_forward
+    value: 1
+    state: present
+
+- name: Ensure Docker is installed
+  dnf:
+    name: docker
+    state: present
+
+- name: Permit an insecure registry in the cluster
+  ini_file:
+    path: /etc/containers/registries.conf
+    section: registries.insecure
+    option: registries
+    value: "['172.30.0.0/16']"
+    state: present
+
+- name: Ensure Docker daemon picks up configuration changes
+  systemd:
+    state: restarted
+    daemon_reload: yes
+    name: docker
+
+- name: Determine which network Docker is using
+  shell: 
+    cmd: docker network inspect -f {% raw %}"{{range .IPAM.Config}}{{.Subnet}}{{end}}"{% endraw %} bridge
+  register: docker_network_inspect
+
+- name: Display what network Docker discovered
+  debug: 
+    var: docker_network_inspect
+
+- name: Ensure firewalld is running
+  systemd:
+    name: firewalld
+    state: started
+
+- name: Ensure existence of firewalld zone named dockerc
+  firewalld:
+    zone: dockerc
+    state: present
+    permanent: True
+
+- name: Add source IP range to dockerc firewalld zone
+  firewalld:
+    zone: dockerc
+    source: "{{ docker_network_inspect.stdout }}"
+    permanent: True
+    state: enabled
+
+- name: Permit access to master API 8443 endpoint
+  firewalld:
+    zone: dockerc
+    port: 8443/tcp
+    state: enabled
+    permanent: True
+
+- name: Permit access to DNS 53 endpoint
+  firewalld:
+    zone: dockerc
+    port: 53/udp
+    state: enabled
+    permanent: True
+
+- name: Permit access to DNS 8053 endpoint
+  firewalld:
+    zone: dockerc
+    port: 8053/udp
+    state: enabled
+    permanent: True
+
+- name: Reload firewalld
+  systemd:
+    state: reloaded
+    name: firewalld
+
+- name: Ensure OpenShift Origin CLI is installed
+  dnf:
+    name: origin-clients
+    state: present

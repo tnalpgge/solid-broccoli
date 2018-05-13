@@ -2,6 +2,7 @@ base:
 
   '*':
     - salt.mine
+    - users.vagrant
 
   '*saltmaster*':
     - salt.formulae
@@ -49,3 +50,37 @@ base:
   'G@roles:wildfly and G@os:SUSE':
     - match: compound
     - pkgrepo.home-ecsos-aggregation
+
+  'wfdc* or wfdm*':
+    - match: compound
+    - wildfly.domain
+
+  'wfsa*':
+    - wildfly.standalone
+
+  'roles:ansible':
+    - match: grain
+    - salt.grains.ansible
+    - pkg.ansible
+
+  'kernel:Linux':
+    - match: grain
+    - users.vagrant.linux
+
+  'ansible*':
+    - salt.grains.ansible
+
+  'oo*master*':
+    - salt.grains.openshift-master
+
+  'oo*infra*':
+    - salt.grains.openshift-infra
+
+  'oo*app*':
+    - salt.grains.openshift-app
+
+  'roles:openshift':
+    - match: grain
+    - users.ansible
+    - users.ansible.linux
+    - pkg.openshift-origin

@@ -1,0 +1,162 @@
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+
+# All Vagrant configuration is done below. The "2" in Vagrant.configure
+# configures the configuration version (we support older styles for
+# backwards compatibility). Please don't change it unless you know what
+# you're doing.
+Vagrant.configure("2") do |config|
+  # The most common configuration options are documented and commented below.
+  # For a complete reference, please see the online documentation at
+  # https://docs.vagrantup.com.
+
+  # Every Vagrant development environment requires a box. You can search for
+  # boxes at https://vagrantcloud.com/search.
+  config.vm.box = "bento/fedora-27"
+
+  # Disable automatic box update checking. If you disable this, then
+  # boxes will only be checked for updates when the user runs
+  # `vagrant box outdated`. This is not recommended.
+  # config.vm.box_check_update = false
+
+  # Create a forwarded port mapping which allows access to a specific port
+  # within the machine from a port on the host machine. In the example below,
+  # accessing "localhost:8080" will access port 80 on the guest machine.
+  # NOTE: This will enable public access to the opened port
+  # config.vm.network "forwarded_port", guest: 80, host: 8080
+
+  # Create a forwarded port mapping which allows access to a specific port
+  # within the machine from a port on the host machine and only allow access
+  # via 127.0.0.1 to disable public access
+  # config.vm.network "forwarded_port", guest: 80, host: 8080, host_ip: "127.0.0.1"
+
+  # Create a private network, which allows host-only access to the machine
+  # using a specific IP.
+  # config.vm.network "private_network", ip: "192.168.33.10"
+
+  # Create a public network, which generally matched to bridged network.
+  # Bridged networks make the machine appear as another physical device on
+  # your network.
+  # config.vm.network "public_network"
+
+  # Share an additional folder to the guest VM. The first argument is
+  # the path on the host to the actual folder. The second argument is
+  # the path on the guest to mount the folder. And the optional third
+  # argument is a set of non-required options.
+  # config.vm.synced_folder "../data", "/vagrant_data"
+
+  # Provider-specific configuration so you can fine-tune various
+  # backing providers for Vagrant. These expose provider-specific options.
+  # Example for VirtualBox:
+  #
+  # config.vm.provider "virtualbox" do |vb|
+  #   # Display the VirtualBox GUI when booting the machine
+  #   vb.gui = true
+  #
+  #   # Customize the amount of memory on the VM:
+  #   vb.memory = "1024"
+  # end
+  #
+  # View the documentation for the provider you are using for more
+  # information on available options.
+
+  # Enable provisioning with a shell script. Additional provisioners such as
+  # Puppet, Chef, Ansible, Salt, and Docker are also available. Please see the
+  # documentation for more information about their specific syntax and use.
+  # config.vm.provision "shell", inline: <<-SHELL
+  #   apt-get update
+  #   apt-get install -y apache2
+  # SHELL
+
+  domain = "navelint.com"
+  machine_folder = `VBoxManage list systemproperties`.split(/\n/).grep(/Default machine folder/).first().split(':')[1].strip()
+
+  num_masters = 1
+  num_infras = 1
+  num_apps = 2
+  num_stores = 0
+  nodes = []
+
+  (0 .. (num_masters + num_infras + num_apps + num_stores - 1)).each do |i|
+    nodes[i] = {}
+    nodes[i][:network] = "private_network"
+    nodes[i][:provider] = {}
+    nodes[i][:provider][:type] = :virtualbox
+    nodes[i][:provider][:virtualbox] = {}
+    nodes[i][:provider][:virtualbox][:cpus] = 1
+    nodes[i][:provider][:virtualbox][:memory] = 8192
+    nodes[i][:provider][:virtualbox][:disks] = []
+    nodes[i][:provider][:virtualbox][:disks][0] = {}
+    nodes[i][:provider][:virtualbox][:disks][0][:controller] = 'SATA Controller'
+    nodes[i][:provider][:virtualbox][:disks][0][:port] = 1
+    nodes[i][:provider][:virtualbox][:disks][0][:device] = 0
+    nodes[i][:provider][:virtualbox][:disks][0][:type] = 'hdd'
+    nodes[i][:provider][:virtualbox][:disks][0][:format] = 'VDI'
+    nodes[i][:provider][:virtualbox][:disks][0][:size] = 60 * 1024
+  end
+
+  (0 .. (num_masters - 1)).each do |i|
+    nodes[i][:prefix] = "oo-master-fe27"
+    nodes[i][:index] = i
+    nodes[i][:lastoctet] = 240 + nodes[i][:index]
+    nodes[i][:provider][:virtualbox][:cpus] = 4
+    nodes[i][:provider][:virtualbox][:memory] = 16384
+  end
+
+  (num_masters .. (num_masters + num_infras - 1)).each do |i|
+    nodes[i][:prefix] = "oo-infra-fe27"
+    nodes[i][:index] = i - num_masters
+    nodes[i][:lastoctet] = 230 + nodes[i][:index]
+  end
+
+  ((num_masters + num_infras) .. (num_masters + num_infras + num_apps - 1)).each do |i|
+    nodes[i][:prefix] = "oo-app-fe27"
+    nodes[i][:index] = i - num_masters - num_infras
+    nodes[i][:lastoctet] = 220 + nodes[i][:index]
+  end
+
+  ((num_masters + num_infras + num_apps) .. (num_masters + num_infras + num_apps + num_stores - 1)).each do |i|
+    nodes[i][:prefix] = "oo-stor-fe27"
+    nodes[i][:index] = i - num_masters - num_infras - num_apps
+    nodes[i][:lastoctet] = 210 + nodes[i][:index]
+  end
+
+  nodes.each do |oo|
+    oo[:name] = sprintf("%s-%02d", oo[:prefix], oo[:index])
+    oo[:hostname] = sprintf("%s.%s", oo[:name], domain)
+    oo[:ip] = sprintf("172.28.128.%d", oo[:lastoctet])
+    oo[:provider][:virtualbox][:name] = oo[:name]
+    oo[:provider][:virtualbox][:disks][0][:path] = File.join(
+      machine_folder,
+      oo[:provider][:virtualbox][:name],
+      sprintf(
+	"%s_disk1.%s",
+	oo[:provider][:virtualbox][:name],
+        oo[:provider][:virtualbox][:disks][0][:format].downcase,
+      ),
+    )
+  end
+
+  nodes.each do |oo|
+    config.vm.define oo[:name] do |n|
+      n.vm.hostname = oo[:hostname]
+      n.vm.network oo[:network], ip: oo[:ip]
+      n.vm.provider oo[:provider][:type] do |p|
+        p.name = oo[:provider][oo[:provider][:type]][:name]
+        p.memory = oo[:provider][oo[:provider][:type]][:memory]
+        p.cpus = oo[:provider][oo[:provider][:type]][:cpus]
+	oo[:provider][oo[:provider][:type]][:disks].each do |d|
+          unless File.exist?(d[:path])
+	    p.customize [ 'createhd', '--format', d[:format], '--size', d[:size], '--filename', d[:path] ]
+	  end # File.exist?
+	  p.customize [ 'storageattach', :id, '--storagectl', d[:controller], '--port', d[:port], '--device', d[:device], '--type', d[:type], '--medium', d[:path] ]
+	end # [:disks].each
+      end # n.vm.provider
+    end # config.vm.define
+  end # nodes.each
+
+  config.vm.provision :salt do |salt|
+    salt.install_type = "stable"
+  end
+ 
+end

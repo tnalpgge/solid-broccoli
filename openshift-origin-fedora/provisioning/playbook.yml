@@ -1,0 +1,18 @@
+---
+- hosts: osho
+  become: yes
+  become_user: root
+  roles:
+    - osho
+
+- hosts: osho-masters
+  become: yes
+  become_user: root
+  roles:
+    - osho-master
+
+#- hosts: osho-infra
+#  become: yes
+#  become_user: root
+#  roles:
+#    - osho-infra

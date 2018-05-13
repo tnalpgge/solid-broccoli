@@ -1,0 +1,5 @@
+---
+- name: Ensure Python is installed to support Ansible
+  yum:
+    name: python27
+    state: installed
