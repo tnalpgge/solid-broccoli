@@ -1,0 +1,57 @@
+---
+- name: Configure ssh keys
+  hosts: default
+  tasks:
+    - command: find /home/vagrant/sync/ -type d -name .vagrant -exec find {}/machines -type f -name private_key ;
+      register: private_keys
+      changed_when: no
+
+    - file:
+        src: "{{ item }}"
+        dest: "/home/vagrant/.ssh/{{ item | regex_replace('^.*/machines/([^/]*)/.*', '\\1') }}.key"
+        state: link
+      with_items: "{{ private_keys.stdout_lines }}"
+
+
+- name: Host bootstrapping
+  hosts: default
+  tasks:
+    # Vagrant's "change host name" capability for Fedora/EL
+    # maps hostname to loopback, conflicting with hostmanager.
+    # We must repair /etc/hosts
+    - replace:
+        dest: /etc/hosts
+        regexp: '^(127\.0\.0\.1\s*)\S*\.example\.com (.*)'
+        replace: '\1\2'
+
+- name: Repository and package preparation
+  hosts: default
+  become: true
+  become_user: root
+  tasks:
+    - package:
+        name: git
+        state: present
+    - package:
+        name: https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm
+        state: present
+    - replace:
+        dest: /etc/yum.repos.d/epel.repo
+        regexp: '^enabled=1'
+        replace: 'enabled=0'
+    - yum:
+        name: "{{ item }}"
+        enablerepo: epel
+        state: present
+      when: ansible_distribution != 'Fedora'
+      with_items:
+        - ansible
+        - pyOpenSSL
+    - dnf:
+        name: "{{ item }}"
+        enablerepo: epel
+        state: present
+      when: ansible_distribution == 'Fedora'
+      with_items:
+        - ansible
+        - pyOpenSSL

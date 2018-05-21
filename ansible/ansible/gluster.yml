@@ -1,0 +1,5 @@
+---
+- hosts: gluster
+  tasks:
+    - include_role:
+        name: gluster

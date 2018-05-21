@@ -8,3 +8,4 @@
 .vagrant
 formulae
 saltmaster/salt/fs/wildfly
+ansible/ansible/roles/*.*
