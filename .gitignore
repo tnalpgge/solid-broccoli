@@ -5,7 +5,10 @@
 # Vim
 *.sw*
 
+# Ansible
+*.retry
+
 .vagrant
 formulae
 saltmaster/salt/fs/wildfly
-ansible/ansible/roles/*.*
+ansible/ansible/roles/[a-z]*.[a-z]*
